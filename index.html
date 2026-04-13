@@ -491,7 +491,7 @@ let map;
 // ─────────────────────────────────────────────
 function initMap() {
   map = L.map('map', { center: [5, 20], zoom: 3, minZoom: 2, maxZoom: 9 });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
     maxZoom: 19,
   }).addTo(map);
