@@ -211,10 +211,13 @@
 <div class="overlay" id="startScreen">
   <div class="globe-icon">🌍</div>
   <h2>Africa Geography Quiz</h2>
-  <p>You'll be given <strong style="color:#f0a500">11 random locations</strong> — countries, capitals, and geographic features — and must click their position on the map. Score points for placing them within a reasonable distance!</p>
+  <p>Place locations — countries, capitals, and geographic features — on the map. Score points for placing them within a reasonable distance!</p>
   <p style="color:#e0c060; font-size:0.8rem;">Green circle = your answer &nbsp;|&nbsp; Blue square = correct location</p>
   <p style="color:#9aaa88; font-size:0.78rem;">Large regions are scored by proximity to any point within them. Rivers are scored by proximity to their full course — click anywhere along the river to be correct.</p>
-  <button class="btn btn-primary" style="max-width:260px; font-size:1.05rem; padding:14px;" onclick="startQuiz()">Start Quiz</button>
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:260px;width:100%">
+    <button class="btn btn-primary" style="font-size:1.05rem; padding:14px;" onclick="startQuiz(false)">11 Random Locations</button>
+    <button class="btn btn-secondary" style="font-size:1rem; padding:12px; margin-top:0;" onclick="startQuiz(true)">All Locations (<span id="allCount"></span>)</button>
+  </div>
 </div>
 
 <!-- RESULTS OVERLAY -->
@@ -478,6 +481,7 @@ const ALL_ITEMS = [
 // ─────────────────────────────────────────────
 let quizItems = [], currentIdx = 0, score = 0, answers = [];
 let pendingMarker = null, placedLayers = [], locked = false;
+let allMode = false;
 // allAnswerLayers stores all per-question layer groups, hidden during quiz, shown at end
 let allAnswerLayers = [];
 let map;
@@ -567,23 +571,25 @@ function itemDist(uLat, uLng, item) {
 // ─────────────────────────────────────────────
 // QUIZ FLOW
 // ─────────────────────────────────────────────
-function startQuiz() {
+function startQuiz(useAll) {
+  allMode = !!useAll;
   document.getElementById('startScreen').classList.add('hidden');
-  quizItems = pickQuizItems();
+  quizItems = allMode ? shuffle(ALL_ITEMS) : pickQuizItems();
   currentIdx = 0; score = 0; answers = [];
   clearMapLayers();
   showQuestion();
 }
 
 function showQuestion() {
-  if (currentIdx >= 11) { setTimeout(showResults, 400); return; }
+  const total = quizItems.length;
+  if (currentIdx >= total) { setTimeout(showResults, 400); return; }
   locked = false;
   if (pendingMarker) { map.removeLayer(pendingMarker); pendingMarker = null; }
 
   const item = quizItems[currentIdx];
-  const pct  = (currentIdx / 11 * 100).toFixed(1);
+  const pct  = (currentIdx / total * 100).toFixed(1);
 
-  document.getElementById('progLabel').textContent  = `Question ${currentIdx+1} of 11`;
+  document.getElementById('progLabel').textContent  = `Question ${currentIdx+1} of ${total}`;
   document.getElementById('progBar').style.width    = pct + '%';
   document.getElementById('itemName').textContent   = item.name;
   document.getElementById('itemHint').textContent   = item.hint;
@@ -664,15 +670,16 @@ function confirmPlacement() {
 }
 
 function showResults() {
+  const total = quizItems.length;
   document.getElementById('progBar').style.width = '100%';
   document.getElementById('progLabel').textContent = 'Quiz complete!';
 
   const panel = document.getElementById('resultsOverlay');
   panel.classList.add('visible');
 
-  document.getElementById('resScore').textContent = `${score} / 11`;
+  document.getElementById('resScore').textContent = `${score} / ${total}`;
 
-  const pct = score / 11;
+  const pct = score / total;
   let stars, msg;
   if      (pct >= 0.91) { stars = '★★★★★'; msg = 'Outstanding! You know Africa incredibly well!'; }
   else if (pct >= 0.73) { stars = '★★★★☆'; msg = 'Great job! Solid knowledge of African geography.'; }
@@ -694,7 +701,7 @@ function showResults() {
 function restartQuiz() {
   document.getElementById('resultsOverlay').classList.remove('visible');
   clearMapLayers();
-  quizItems = pickQuizItems();
+  quizItems = allMode ? shuffle(ALL_ITEMS) : pickQuizItems();
   currentIdx = 0; score = 0; answers = []; allAnswerLayers = [];
   map.setView([5, 20], 3);
   showQuestion();
@@ -718,7 +725,11 @@ function clearMapLayers() {
 // ─────────────────────────────────────────────
 // BOOT
 // ─────────────────────────────────────────────
-window.addEventListener('load', initMap);
+window.addEventListener('load', () => {
+  initMap();
+  const el = document.getElementById('allCount');
+  if (el) el.textContent = ALL_ITEMS.length;
+});
 </script>
 </body>
 </html>
